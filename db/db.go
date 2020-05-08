@@ -1,5 +1,7 @@
 package db
+
 import "database/sql"
+
 func DbConn() (db *sql.DB) {
 	// dbDriver := "mysql"
 	// dbUser := "root"

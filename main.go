@@ -56,7 +56,43 @@ func createCluster(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newCluster)
 }
+func createNode(w http.ResponseWriter, r *http.Request) {
+	var newNode models.Node
+	reqBody, err := ioutil.ReadAll(r.Body)
+	fmt.Println(string(reqBody))
+	if err != nil {
+		fmt.Fprintf(w, "Kindly check the node structure")
+	}
 
+	res := json.Unmarshal(reqBody, &newNode)
+	fmt.Println(res, newNode)
+	// Call DB & Insert
+	db := db.DbConn()
+	if r.Method == "POST" {
+		insForm, err := db.Prepare("INSERT INTO node(org_id,user_id,node_name,cluster_name,node_count,location,policy_id,status) VALUES( ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		res, err := insForm.Exec(newNode.OrgID, newNode.UserID, newNode.NodeName, newNode.ClusterName, newNode.NodeCount, newNode.Location, newNode.PolicyID, newNode.Status)
+		if err != nil {
+			log.Fatal(err)
+		}
+		lastID, err := res.LastInsertId()
+		if err != nil {
+			log.Fatal(err)
+		}
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
+		log.Println("INSERT: Id: ", newNode.ID, insForm)
+	}
+	defer db.Close()
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newNode)
+}
 func getOneCluster(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(clusterID)
@@ -77,7 +113,6 @@ func getOneCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(cluster)
 }
-
 func getAllClusters(w http.ResponseWriter, r *http.Request) {
 	db := db.DbConn()
 	selDB, err := db.Query("SELECT * FROM cluster")
@@ -85,7 +120,7 @@ func getAllClusters(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error())
 	}
 	var cluster models.Cluster
-	var result models.ResponseBody
+	var result models.ResponseClusters
 	for selDB.Next() {
 		err = selDB.Scan(&cluster.ID, &cluster.OrgID, &cluster.UserID, &cluster.ClusterName, &cluster.NodeCount, &cluster.Location, &cluster.PolicyID, &cluster.Status)
 		if err != nil {
@@ -97,7 +132,6 @@ func getAllClusters(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(result)
 	json.NewEncoder(w).Encode(result)
 }
-
 func updateCluster(w http.ResponseWriter, r *http.Request) {
 	var updatedCluster models.Cluster
 	clusterID := mux.Vars(r)["id"]
@@ -137,7 +171,6 @@ func updateCluster(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(updatedCluster)
 }
-
 func deleteCluster(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(clusterID)
@@ -164,12 +197,12 @@ func deleteCluster(w http.ResponseWriter, r *http.Request) {
 	log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
 	log.Println("UPDATE: Id: ", id)
 }
-
 func main() {
 	log.Println("Server started on: http://localhost:8080")
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/cluster", createCluster).Methods("POST")
+	router.HandleFunc("/node", createNode).Methods("POST")
 	router.HandleFunc("/clusters", getAllClusters).Methods("GET")
 	router.HandleFunc("/cluster/{id}", getOneCluster).Methods("GET")
 	router.HandleFunc("/cluster/{id}", updateCluster).Methods("PUT")
