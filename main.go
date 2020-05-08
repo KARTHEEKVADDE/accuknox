@@ -18,7 +18,6 @@ import (
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome home!")
 }
-
 func createCluster(w http.ResponseWriter, r *http.Request) {
 	var newCluster models.Cluster
 	reqBody, err := ioutil.ReadAll(r.Body)
@@ -113,6 +112,26 @@ func getOneCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(cluster)
 }
+func getOneNode(w http.ResponseWriter, r *http.Request) {
+	nodeID := mux.Vars(r)["id"]
+	id, _ := strconv.Atoi(nodeID)
+
+	db := db.DbConn()
+	selDB, err := db.Query("SELECT * FROM node WHERE id=?", id)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	var node models.Node
+	for selDB.Next() {
+		err = selDB.Scan(&node.ID, &node.OrgID, &node.UserID, &node.NodeName, &node.ClusterName, &node.NodeCount, &node.Location, &node.PolicyID, &node.Status)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+	json.NewEncoder(w).Encode(node)
+}
 func getAllClusters(w http.ResponseWriter, r *http.Request) {
 	db := db.DbConn()
 	selDB, err := db.Query("SELECT * FROM cluster")
@@ -205,6 +224,7 @@ func main() {
 	router.HandleFunc("/node", createNode).Methods("POST")
 	router.HandleFunc("/clusters", getAllClusters).Methods("GET")
 	router.HandleFunc("/cluster/{id}", getOneCluster).Methods("GET")
+	router.HandleFunc("/node/{id}", getOneNode).Methods("GET")
 	router.HandleFunc("/cluster/{id}", updateCluster).Methods("PUT")
 	router.HandleFunc("/cluster/{id}", deleteCluster).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":8080", router))
