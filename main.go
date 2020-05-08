@@ -151,6 +151,25 @@ func getAllClusters(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(result)
 	json.NewEncoder(w).Encode(result)
 }
+func getAllNodes(w http.ResponseWriter, r *http.Request) {
+	db := db.DbConn()
+	selDB, err := db.Query("SELECT * FROM node")
+	if err != nil {
+		panic(err.Error())
+	}
+	var node models.Node
+	var result models.ResponseNodes
+	for selDB.Next() {
+		err = selDB.Scan(&node.ID, &node.OrgID, &node.UserID, &node.NodeName, &node.ClusterName, &node.NodeCount, &node.Location, &node.PolicyID, &node.Status)
+		if err != nil {
+			panic(err.Error())
+		}
+		result.Nodes = append(result.Nodes, node)
+	}
+	defer db.Close()
+	fmt.Println(result)
+	json.NewEncoder(w).Encode(result)
+}
 func updateCluster(w http.ResponseWriter, r *http.Request) {
 	var updatedCluster models.Cluster
 	clusterID := mux.Vars(r)["id"]
@@ -223,6 +242,7 @@ func main() {
 	router.HandleFunc("/cluster", createCluster).Methods("POST")
 	router.HandleFunc("/node", createNode).Methods("POST")
 	router.HandleFunc("/clusters", getAllClusters).Methods("GET")
+	router.HandleFunc("/nodes", getAllNodes).Methods("GET")
 	router.HandleFunc("/cluster/{id}", getOneCluster).Methods("GET")
 	router.HandleFunc("/node/{id}", getOneNode).Methods("GET")
 	router.HandleFunc("/cluster/{id}", updateCluster).Methods("PUT")
