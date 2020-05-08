@@ -181,7 +181,7 @@ func updateCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Unmarshal(reqBody, &updatedCluster)
 	fmt.Println(updatedCluster)
-	// Call DB & Insert
+	// Call DB & Update
 	db := db.DbConn()
 	if r.Method == "POST" {
 		updForm, err := db.Prepare("UPDATE cluster SET org_id=?, user_id=?, cluster_name=?, node_count=?, location=?, policy_id=?, status=? WHERE id=?")
@@ -208,6 +208,45 @@ func updateCluster(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(updatedCluster)
+}
+func updateNode(w http.ResponseWriter, r *http.Request) {
+	var updatedNode models.Node
+	nodeID := mux.Vars(r)["id"]
+	id, _ := strconv.Atoi(nodeID)
+	reqBody, err := ioutil.ReadAll(r.Body)
+	fmt.Println(string(reqBody))
+	if err != nil {
+		fmt.Fprintf(w, "Kindly check the cluster structure")
+	}
+	json.Unmarshal(reqBody, &updatedNode)
+	fmt.Println(updatedNode)
+	// Call DB & Update
+	db := db.DbConn()
+	if r.Method == "POST" {
+		updForm, err := db.Prepare("UPDATE node SET org_id=?, user_id=?, node_name=?, cluster_name=?, node_count=?, location=?, policy_id=?, status=? WHERE id=?")
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		res, err := updForm.Exec(updatedNode.OrgID, updatedNode.UserID, updatedNode.NodeName, updatedNode.ClusterName, updatedNode.NodeCount, updatedNode.Location, updatedNode.PolicyID, updatedNode.Status, id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		lastID, err := res.LastInsertId()
+		if err != nil {
+			log.Fatal(err)
+		}
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
+		log.Println("UPDATE: Id: ", updatedNode.ID, updForm)
+	}
+	defer db.Close()
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(updatedNode)
 }
 func deleteCluster(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
@@ -246,6 +285,7 @@ func main() {
 	router.HandleFunc("/cluster/{id}", getOneCluster).Methods("GET")
 	router.HandleFunc("/node/{id}", getOneNode).Methods("GET")
 	router.HandleFunc("/cluster/{id}", updateCluster).Methods("PUT")
+	router.HandleFunc("/node/{id}", updateNode).Methods("PUT")
 	router.HandleFunc("/cluster/{id}", deleteCluster).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
