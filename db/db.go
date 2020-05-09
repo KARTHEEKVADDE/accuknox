@@ -2,7 +2,8 @@ package db
 
 import "database/sql"
 
-func DbConn() (db *sql.DB) {
+//Conn connects to Database
+func Conn() (db *sql.DB) {
 	// dbDriver := "mysql"
 	// dbUser := "root"
 	// dbPass := "1234"

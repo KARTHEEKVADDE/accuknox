@@ -7,14 +7,18 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
 	"github.com/gorilla/mux"
 	"github.com/kartheekvadde/accuknox/db"
 	"github.com/kartheekvadde/accuknox/models"
 )
 
+//HealthyHome checks Health
 func HealthyHome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome Kartheek!")
 }
+
+//CreateCluster creates a single cluster
 func CreateCluster(w http.ResponseWriter, r *http.Request) {
 	var newCluster models.Cluster
 	reqBody, err := ioutil.ReadAll(r.Body)
@@ -26,7 +30,7 @@ func CreateCluster(w http.ResponseWriter, r *http.Request) {
 	res := json.Unmarshal(reqBody, &newCluster)
 	fmt.Println(res, newCluster)
 	// Call DB & Insert
-	db := db.DbConn()
+	db := db.Conn()
 	if r.Method == "POST" {
 		insForm, err := db.Prepare("INSERT INTO cluster(org_id,user_id,cluster_name,node_count,location,policy_id,status) VALUES( ?, ?, ?, ?, ?, ?, ?)")
 		if err != nil {
@@ -52,6 +56,8 @@ func CreateCluster(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newCluster)
 }
+
+//CreateNode creates a single node
 func CreateNode(w http.ResponseWriter, r *http.Request) {
 	var newNode models.Node
 	reqBody, err := ioutil.ReadAll(r.Body)
@@ -63,7 +69,7 @@ func CreateNode(w http.ResponseWriter, r *http.Request) {
 	res := json.Unmarshal(reqBody, &newNode)
 	fmt.Println(res, newNode)
 	// Call DB & Insert
-	db := db.DbConn()
+	db := db.Conn()
 	if r.Method == "POST" {
 		insForm, err := db.Prepare("INSERT INTO node(org_id,user_id,node_name,cluster_name,node_count,location,policy_id,status) VALUES( ?, ?, ?, ?, ?, ?, ?, ?)")
 		if err != nil {
@@ -89,11 +95,13 @@ func CreateNode(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newNode)
 }
+
+//GetOneCluster reads a single cluster
 func GetOneCluster(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(clusterID)
 
-	db := db.DbConn()
+	db := db.Conn()
 	selDB, err := db.Query("SELECT * FROM cluster WHERE id=?", id)
 	if err != nil {
 		panic(err.Error())
@@ -109,11 +117,13 @@ func GetOneCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(cluster)
 }
+
+//GetOneNode reads a single node
 func GetOneNode(w http.ResponseWriter, r *http.Request) {
 	nodeID := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(nodeID)
 
-	db := db.DbConn()
+	db := db.Conn()
 	selDB, err := db.Query("SELECT * FROM node WHERE id=?", id)
 	if err != nil {
 		panic(err.Error())
@@ -129,8 +139,10 @@ func GetOneNode(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(node)
 }
+
+//GetAllClusters reads all the clusters
 func GetAllClusters(w http.ResponseWriter, r *http.Request) {
-	db := db.DbConn()
+	db := db.Conn()
 	selDB, err := db.Query("SELECT * FROM cluster")
 	if err != nil {
 		panic(err.Error())
@@ -148,8 +160,10 @@ func GetAllClusters(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(result)
 	json.NewEncoder(w).Encode(result)
 }
+
+//GetAllNodes reads all the nodes
 func GetAllNodes(w http.ResponseWriter, r *http.Request) {
-	db := db.DbConn()
+	db := db.Conn()
 	selDB, err := db.Query("SELECT * FROM node")
 	if err != nil {
 		panic(err.Error())
@@ -167,6 +181,8 @@ func GetAllNodes(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(result)
 	json.NewEncoder(w).Encode(result)
 }
+
+//UpdateCluster updates a single cluster
 func UpdateCluster(w http.ResponseWriter, r *http.Request) {
 	var updatedCluster models.Cluster
 	clusterID := mux.Vars(r)["id"]
@@ -179,7 +195,7 @@ func UpdateCluster(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(reqBody, &updatedCluster)
 	fmt.Println(updatedCluster)
 	// Call DB & Update
-	db := db.DbConn()
+	db := db.Conn()
 	if r.Method == "POST" {
 		updForm, err := db.Prepare("UPDATE cluster SET org_id=?, user_id=?, cluster_name=?, node_count=?, location=?, policy_id=?, status=? WHERE id=?")
 
@@ -206,6 +222,8 @@ func UpdateCluster(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(updatedCluster)
 }
+
+//UpdateNode updates a single node
 func UpdateNode(w http.ResponseWriter, r *http.Request) {
 	var updatedNode models.Node
 	nodeID := mux.Vars(r)["id"]
@@ -218,7 +236,7 @@ func UpdateNode(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(reqBody, &updatedNode)
 	fmt.Println(updatedNode)
 	// Call DB & Update
-	db := db.DbConn()
+	db := db.Conn()
 	if r.Method == "POST" {
 		updForm, err := db.Prepare("UPDATE node SET org_id=?, user_id=?, node_name=?, cluster_name=?, node_count=?, location=?, policy_id=?, status=? WHERE id=?")
 
@@ -245,11 +263,13 @@ func UpdateNode(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(updatedNode)
 }
+
+//DeleteCluster deletes a single cluster
 func DeleteCluster(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(clusterID)
 
-	db := db.DbConn()
+	db := db.Conn()
 	delForm, err := db.Prepare("DELETE FROM cluster WHERE id=?")
 	if err != nil {
 		panic(err.Error())
@@ -271,11 +291,13 @@ func DeleteCluster(w http.ResponseWriter, r *http.Request) {
 	log.Printf("ID = %d, affected = %d\n", lastID, rowCnt)
 	log.Println("UPDATE: Id: ", id)
 }
+
+//DeleteNode deletes a single node
 func DeleteNode(w http.ResponseWriter, r *http.Request) {
 	nodeID := mux.Vars(r)["id"]
 	id, _ := strconv.Atoi(nodeID)
 
-	db := db.DbConn()
+	db := db.Conn()
 	delForm, err := db.Prepare("DELETE FROM node WHERE id=?")
 	if err != nil {
 		panic(err.Error())
