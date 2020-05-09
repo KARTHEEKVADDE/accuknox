@@ -5,7 +5,7 @@ import (
 	"net/http"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	"github.com/kartheekvadde/accuknox/handlers"
+	"github.com/accuknox/knox-service/handlers"
 )
 
 func main() {

@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/kartheekvadde/accuknox/db"
-	"github.com/kartheekvadde/accuknox/models"
+	"github.com/accuknox/knox-service/db"
+	"github.com/accuknox/knox-service/models"
 )
 
 //HealthyHome checks Health

@@ -1,4 +1,4 @@
-module github.com/kartheekvadde/accuknox
+module github.com/accuknox/knox-service
 
 go 1.14
 
